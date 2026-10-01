@@ -1,7 +1,6 @@
 import os
 import io
 import hashlib
-import numpy as np
 import streamlit as st
 import faiss
 
@@ -14,9 +13,10 @@ from sentence_transformers import SentenceTransformer
 # App configuration
 # -----------------------------
 st.set_page_config(
-    page_title="RAG PDF Assistant",
-    page_icon="📚",
+    page_title="Knowledge RAG",
+    page_icon="🧠",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -27,47 +27,193 @@ TOP_K_DEFAULT = 5
 
 
 # -----------------------------
-# Custom UI
+# Premium UI
 # -----------------------------
 st.markdown(
     """
     <style>
-        .block-container {
-            max-width: 1150px;
-            padding-top: 2rem;
-            padding-bottom: 3rem;
-        }
-        .hero {
-            padding: 1.4rem 1.6rem;
-            border: 1px solid rgba(128,128,128,.22);
-            border-radius: 18px;
-            margin-bottom: 1rem;
-        }
-        .hero h1 {
-            margin: 0 0 .35rem 0;
-            font-size: 2.2rem;
-        }
-        .hero p {
-            margin: 0;
-            opacity: .78;
-            font-size: 1rem;
-        }
-        .metric-box {
-            border: 1px solid rgba(128,128,128,.18);
-            border-radius: 14px;
-            padding: .9rem 1rem;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+    [data-testid="stAppViewContainer"] {
+        background:
+            radial-gradient(circle at 10% 10%, rgba(99,102,241,.10), transparent 30%),
+            radial-gradient(circle at 90% 15%, rgba(16,185,129,.08), transparent 28%);
+    }
 
-st.markdown(
-    """
-    <div class="hero">
-        <h1>📚 RAG PDF Assistant</h1>
-        <p>Upload a PDF, build a FAISS vector index, and ask grounded questions using Groq.</p>
-    </div>
+    .block-container {
+        max-width: 1180px;
+        padding-top: 2rem;
+        padding-bottom: 4rem;
+    }
+
+    [data-testid="stSidebar"] {
+        border-right: 1px solid rgba(148,163,184,.14);
+    }
+
+    .rag-hero {
+        position: relative;
+        overflow: hidden;
+        padding: 2rem 2.1rem;
+        border-radius: 24px;
+        border: 1px solid rgba(148,163,184,.18);
+        background: linear-gradient(135deg, rgba(99,102,241,.13), rgba(16,185,129,.07));
+        box-shadow: 0 18px 55px rgba(0,0,0,.10);
+        margin-bottom: 1.4rem;
+    }
+
+    .rag-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .38rem .7rem;
+        border-radius: 999px;
+        background: rgba(99,102,241,.12);
+        border: 1px solid rgba(99,102,241,.22);
+        font-size: .82rem;
+        font-weight: 700;
+        margin-bottom: .9rem;
+    }
+
+    .rag-hero h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3.25rem);
+        line-height: 1.06;
+        letter-spacing: -.04em;
+    }
+
+    .rag-hero p {
+        margin: .85rem 0 0 0;
+        max-width: 760px;
+        opacity: .76;
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+
+    .tech-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+        margin-top: 1.15rem;
+    }
+
+    .tech-pill {
+        padding: .42rem .72rem;
+        border-radius: 999px;
+        border: 1px solid rgba(148,163,184,.20);
+        background: rgba(15,23,42,.08);
+        font-size: .82rem;
+        font-weight: 650;
+    }
+
+    .side-brand {
+        padding: .5rem 0 1rem 0;
+    }
+
+    .side-brand h2 {
+        margin: 0;
+        font-size: 1.35rem;
+        letter-spacing: -.02em;
+    }
+
+    .side-brand p {
+        margin: .35rem 0 0 0;
+        opacity: .65;
+        font-size: .88rem;
+    }
+
+    .status-card {
+        border: 1px solid rgba(148,163,184,.18);
+        border-radius: 16px;
+        padding: .85rem .9rem;
+        margin: .5rem 0 .9rem 0;
+        background: rgba(148,163,184,.05);
+    }
+
+    .status-title {
+        font-size: .76rem;
+        opacity: .65;
+        margin-bottom: .28rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-weight: 800;
+    }
+
+    .status-value {
+        font-size: .9rem;
+        font-weight: 700;
+        word-break: break-word;
+    }
+
+    .dot-ok {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        margin-right: 7px;
+        box-shadow: 0 0 0 4px rgba(34,197,94,.12);
+    }
+
+    .dot-warn {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #f59e0b;
+        margin-right: 7px;
+        box-shadow: 0 0 0 4px rgba(245,158,11,.12);
+    }
+
+    div[data-testid="stMetric"] {
+        border: 1px solid rgba(148,163,184,.17);
+        border-radius: 18px;
+        padding: 1rem 1.1rem;
+        background: rgba(148,163,184,.04);
+    }
+
+    [data-testid="stFileUploader"] {
+        border-radius: 20px;
+    }
+
+    [data-testid="stFileUploaderDropzone"] {
+        border-radius: 18px;
+        border: 1px dashed rgba(99,102,241,.45);
+        padding: 1.2rem;
+    }
+
+    div[data-testid="stChatMessage"] {
+        border: 1px solid rgba(148,163,184,.13);
+        border-radius: 18px;
+        padding: .35rem .5rem;
+        margin-bottom: .65rem;
+    }
+
+    .empty-card {
+        text-align: center;
+        padding: 2.25rem 1rem;
+        border: 1px dashed rgba(148,163,184,.24);
+        border-radius: 20px;
+        background: rgba(148,163,184,.035);
+        margin-top: .8rem;
+    }
+
+    .empty-icon {
+        font-size: 2.25rem;
+        margin-bottom: .55rem;
+    }
+
+    .empty-card h3 {
+        margin: .25rem 0;
+    }
+
+    .empty-card p {
+        margin: .4rem auto 0;
+        max-width: 560px;
+        opacity: .65;
+        line-height: 1.6;
+    }
+
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
     """,
     unsafe_allow_html=True,
 )
@@ -76,13 +222,13 @@ st.markdown(
 # -----------------------------
 # Helpers
 # -----------------------------
-@st.cache_resource(show_spinner="Loading open-source embedding model...")
+@st.cache_resource(show_spinner="Loading embedding model...")
 def load_embedding_model():
     return SentenceTransformer(EMBEDDING_MODEL)
 
 
 def get_groq_key():
-    """Read GROQ_API_KEY from Streamlit secrets or environment variables."""
+    """Read the API key only from Streamlit Secrets or environment variables."""
     try:
         if "GROQ_API_KEY" in st.secrets:
             return st.secrets["GROQ_API_KEY"]
@@ -93,7 +239,6 @@ def get_groq_key():
 
 
 def extract_pdf_pages(pdf_bytes: bytes):
-    """Extract text page-by-page from a PDF."""
     reader = PdfReader(io.BytesIO(pdf_bytes))
     pages = []
 
@@ -102,31 +247,17 @@ def extract_pdf_pages(pdf_bytes: bytes):
         text = " ".join(text.split())
 
         if text.strip():
-            pages.append(
-                {
-                    "page": page_number,
-                    "text": text.strip(),
-                }
-            )
+            pages.append({"page": page_number, "text": text.strip()})
 
     return pages
 
 
 def token_chunk_pages(pages, tokenizer, chunk_size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
-    """
-    Split PDF text into token-aware chunks.
-
-    Tokenization uses the tokenizer that belongs to the open-source
-    SentenceTransformer embedding model.
-    """
     chunks = []
 
     for page_data in pages:
-        page_number = page_data["page"]
-        text = page_data["text"]
-
         token_ids = tokenizer.encode(
-            text,
+            page_data["text"],
             add_special_tokens=False,
             truncation=False,
         )
@@ -150,7 +281,7 @@ def token_chunk_pages(pages, tokenizer, chunk_size=CHUNK_SIZE, overlap=CHUNK_OVE
             if chunk_text:
                 chunks.append(
                     {
-                        "page": page_number,
+                        "page": page_data["page"],
                         "chunk": chunk_number,
                         "text": chunk_text,
                         "token_count": len(current_ids),
@@ -167,7 +298,6 @@ def token_chunk_pages(pages, tokenizer, chunk_size=CHUNK_SIZE, overlap=CHUNK_OVE
 
 
 def build_faiss_index(chunks, embedding_model):
-    """Create normalized embeddings and store them in an in-memory FAISS index."""
     texts = [item["text"] for item in chunks]
 
     embeddings = embedding_model.encode(
@@ -177,15 +307,12 @@ def build_faiss_index(chunks, embedding_model):
         normalize_embeddings=True,
     ).astype("float32")
 
-    dimension = embeddings.shape[1]
-    index = faiss.IndexFlatIP(dimension)
+    index = faiss.IndexFlatIP(embeddings.shape[1])
     index.add(embeddings)
-
     return index
 
 
 def retrieve(query, index, chunks, embedding_model, top_k=5):
-    """Retrieve the most similar chunks using cosine similarity."""
     query_embedding = embedding_model.encode(
         [query],
         convert_to_numpy=True,
@@ -209,20 +336,16 @@ def retrieve(query, index, chunks, embedding_model, top_k=5):
 
 
 def build_context(retrieved_chunks):
-    """Format retrieved chunks for the LLM."""
-    context_parts = []
-
-    for i, item in enumerate(retrieved_chunks, start=1):
-        context_parts.append(
+    return "\n\n".join(
+        (
             f"[Source {i} | Page {item['page']} | Chunk {item['chunk']}]\n"
             f"{item['text']}"
         )
-
-    return "\n\n".join(context_parts)
+        for i, item in enumerate(retrieved_chunks, start=1)
+    )
 
 
 def ask_groq(api_key, question, context):
-    """Generate a grounded answer using Groq."""
     client = Groq(api_key=api_key)
 
     system_prompt = (
@@ -230,24 +353,22 @@ def ask_groq(api_key, question, context):
         "Answer only from the supplied PDF context. "
         "If the answer is not supported by the context, clearly say that "
         "the information was not found in the uploaded document. "
-        "Do not invent facts. "
-        "When useful, mention page numbers using the source labels supplied in the context. "
-        "Keep the answer clear and well structured."
+        "Do not invent facts. Mention page numbers when useful. "
+        "Keep the answer clear, concise, and well structured."
     )
-
-    user_prompt = f"""PDF CONTEXT:
-{context}
-
-QUESTION:
-{question}
-
-Answer the question using only the PDF context above."""
 
     completion = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
+            {
+                "role": "user",
+                "content": (
+                    f"PDF CONTEXT:\n{context}\n\n"
+                    f"QUESTION:\n{question}\n\n"
+                    "Answer using only the PDF context above."
+                ),
+            },
         ],
         temperature=0.2,
         max_tokens=1200,
@@ -257,62 +378,152 @@ Answer the question using only the PDF context above."""
 
 
 def reset_document_state():
-    keys = [
+    for key in [
         "document_hash",
         "document_name",
         "pages",
         "chunks",
         "faiss_index",
         "messages",
-    ]
-    for key in keys:
+    ]:
         st.session_state.pop(key, None)
+
+
+# -----------------------------
+# Secrets / runtime config
+# -----------------------------
+api_key = get_groq_key()
 
 
 # -----------------------------
 # Sidebar
 # -----------------------------
 with st.sidebar:
-    st.header("⚙️ Settings")
-
-    saved_key = get_groq_key()
-    api_key_input = st.text_input(
-        "Groq API Key",
-        type="password",
-        placeholder="gsk_...",
-        help=(
-            "For Streamlit Cloud, storing GROQ_API_KEY in Secrets is safer. "
-            "If a secret is configured, you can leave this field empty."
-        ),
+    st.markdown(
+        """
+        <div class="side-brand">
+            <h2>🧠 Knowledge RAG</h2>
+            <p>Private document intelligence</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    api_key = api_key_input.strip() or saved_key
-
+    st.markdown("### Retrieval")
     top_k = st.slider(
-        "Retrieved chunks",
+        "Context chunks",
         min_value=2,
         max_value=10,
         value=TOP_K_DEFAULT,
-        help="How many semantically similar PDF chunks are sent to the LLM.",
+        help="Number of relevant PDF chunks retrieved for each question.",
     )
 
-    st.divider()
-    st.caption(f"LLM: `{GROQ_MODEL}`")
-    st.caption(f"Embeddings: `{EMBEDDING_MODEL}`")
-    st.caption("Vector DB: `FAISS`")
+    st.markdown("---")
+    st.markdown("### System")
+
+    if api_key:
+        st.markdown(
+            """
+            <div class="status-card">
+                <div class="status-title">Groq connection</div>
+                <div class="status-value"><span class="dot-ok"></span>Secret configured</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            """
+            <div class="status-card">
+                <div class="status-title">Groq connection</div>
+                <div class="status-value"><span class="dot-warn"></span>Secret not configured</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        f"""
+        <div class="status-card">
+            <div class="status-title">Language model</div>
+            <div class="status-value">{GROQ_MODEL}</div>
+        </div>
+
+        <div class="status-card">
+            <div class="status-title">Embeddings</div>
+            <div class="status-value">all-MiniLM-L6-v2</div>
+        </div>
+
+        <div class="status-card">
+            <div class="status-title">Vector store</div>
+            <div class="status-value"><span class="dot-ok"></span>FAISS · Local</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.caption("Your Groq key is never entered or displayed in the app UI.")
 
 
 # -----------------------------
-# PDF upload and indexing
+# Main header
 # -----------------------------
+st.markdown(
+    """
+    <div class="rag-hero">
+        <div class="rag-badge">✦ Retrieval-Augmented Generation</div>
+        <h1>Chat with your PDF.<br>Grounded in your document.</h1>
+        <p>
+            Upload a PDF and Knowledge RAG will extract its text, create token-aware
+            chunks, generate open-source embeddings, index them with FAISS, and use
+            Groq to answer questions from the most relevant context.
+        </p>
+        <div class="tech-row">
+            <span class="tech-pill">📄 PyPDF</span>
+            <span class="tech-pill">🧩 Token Chunking</span>
+            <span class="tech-pill">🧠 MiniLM Embeddings</span>
+            <span class="tech-pill">⚡ FAISS</span>
+            <span class="tech-pill">🚀 Groq GPT-OSS</span>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+if not api_key:
+    st.warning(
+        "Groq API key is not configured. In Streamlit Cloud open "
+        "**Manage app → Settings → Secrets** and add "
+        '`GROQ_API_KEY = "gsk_..."`.'
+    )
+
+
+# -----------------------------
+# Upload / indexing
+# -----------------------------
+st.markdown("### 📁 Add a knowledge source")
+st.caption("Upload a text-based PDF. Your document is processed in the current app session.")
+
 uploaded_file = st.file_uploader(
-    "Upload a PDF document",
+    "Drop your PDF here",
     type=["pdf"],
-    help="Text-based PDFs work best. Scanned/image-only PDFs require OCR, which is not included in this 2-file version.",
+    label_visibility="collapsed",
 )
 
 if uploaded_file is None:
-    st.info("👆 Upload a PDF to build the RAG knowledge base.")
+    st.markdown(
+        """
+        <div class="empty-card">
+            <div class="empty-icon">📚</div>
+            <h3>Your knowledge base is empty</h3>
+            <p>
+                Upload a PDF above. The app will extract the text, create embeddings,
+                and build a searchable FAISS index automatically.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.stop()
 
 
@@ -325,19 +536,18 @@ if st.session_state.get("document_hash") != current_hash:
     try:
         embedding_model = load_embedding_model()
 
-        with st.status("Processing PDF...", expanded=True) as status:
-            st.write("1. Extracting text from PDF...")
+        with st.status("Building your knowledge base...", expanded=True) as status:
+            st.write("📄 Extracting PDF text")
             pages = extract_pdf_pages(pdf_bytes)
 
             if not pages:
                 status.update(label="No readable text found", state="error")
                 st.error(
-                    "I could not extract readable text from this PDF. "
-                    "It may be scanned/image-only. Try a text-based PDF or add OCR later."
+                    "No readable text was found. This PDF may be scanned or image-only."
                 )
                 st.stop()
 
-            st.write("2. Tokenizing and creating overlapping chunks...")
+            st.write("🧩 Creating token-aware chunks")
             chunks = token_chunk_pages(
                 pages,
                 embedding_model.tokenizer,
@@ -347,15 +557,15 @@ if st.session_state.get("document_hash") != current_hash:
 
             if not chunks:
                 status.update(label="No chunks created", state="error")
-                st.error("No usable text chunks could be created from the document.")
+                st.error("No usable chunks could be created from this document.")
                 st.stop()
 
-            st.write("3. Creating open-source embeddings...")
-            st.write("4. Building FAISS vector index...")
+            st.write("🧠 Generating open-source embeddings")
+            st.write("⚡ Building FAISS vector index")
             index = build_faiss_index(chunks, embedding_model)
 
             status.update(
-                label="PDF indexed successfully",
+                label="Knowledge base ready",
                 state="complete",
                 expanded=False,
             )
@@ -373,47 +583,47 @@ if st.session_state.get("document_hash") != current_hash:
 
 
 # -----------------------------
-# Knowledge-base summary
+# Knowledge base overview
 # -----------------------------
 pages = st.session_state.pages
 chunks = st.session_state.chunks
 
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("📄 Pages with text", len(pages))
-with col2:
-    st.metric("🧩 Chunks", len(chunks))
-with col3:
-    st.metric(
-        "🔤 Approx. indexed tokens",
-        f"{sum(c['token_count'] for c in chunks):,}",
-    )
+st.markdown("### ✨ Knowledge base ready")
 
-st.success(f"Knowledge base ready: **{st.session_state.document_name}**")
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("Pages", len(pages))
+m2.metric("Chunks", len(chunks))
+m3.metric("Indexed tokens", f"{sum(c['token_count'] for c in chunks):,}")
+m4.metric("Retriever", f"Top {top_k}")
+
+st.caption(f"Currently indexed: **{st.session_state.document_name}**")
 
 
 # -----------------------------
 # Chat
 # -----------------------------
-st.subheader("💬 Ask your PDF")
+st.markdown("---")
+st.markdown("### 💬 Ask your document")
+st.caption("Answers are generated from the most relevant chunks retrieved from your PDF.")
+
+if not st.session_state.get("messages"):
+    st.info("Try a question like: **Summarize the main ideas of this document.**")
 
 for message in st.session_state.get("messages", []):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-question = st.chat_input("Ask something about the uploaded PDF...")
+question = st.chat_input("Ask a question about this PDF...")
 
 if question:
     if not api_key:
         st.error(
-            "Please enter your Groq API key in the sidebar, or configure "
-            "`GROQ_API_KEY` in Streamlit Secrets."
+            "Groq API key is missing. Add GROQ_API_KEY in Streamlit Cloud Secrets, "
+            "then reboot the app."
         )
         st.stop()
 
-    st.session_state.messages.append(
-        {"role": "user", "content": question}
-    )
+    st.session_state.messages.append({"role": "user", "content": question})
 
     with st.chat_message("user"):
         st.markdown(question)
@@ -422,7 +632,7 @@ if question:
         embedding_model = load_embedding_model()
 
         with st.chat_message("assistant"):
-            with st.spinner("Retrieving relevant context and generating answer..."):
+            with st.spinner("Searching the document and generating an answer..."):
                 retrieved = retrieve(
                     question,
                     st.session_state.faiss_index,
@@ -436,14 +646,15 @@ if question:
 
             st.markdown(answer)
 
-            with st.expander("🔎 Retrieved source chunks"):
+            with st.expander("🔎 View retrieved evidence"):
                 for i, item in enumerate(retrieved, start=1):
                     st.markdown(
                         f"**Source {i} · Page {item['page']} · "
                         f"Chunk {item['chunk']} · Similarity {item['score']:.3f}**"
                     )
                     st.write(item["text"])
-                    st.divider()
+                    if i != len(retrieved):
+                        st.divider()
 
         st.session_state.messages.append(
             {"role": "assistant", "content": answer}
