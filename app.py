@@ -119,47 +119,37 @@ st.markdown(
         font-size: .88rem;
     }
 
-    .status-card {
-        border: 1px solid rgba(148,163,184,.18);
-        border-radius: 16px;
-        padding: .85rem .9rem;
-        margin: .5rem 0 .9rem 0;
-        background: rgba(148,163,184,.05);
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 1.1rem;
     }
 
-    .status-title {
-        font-size: .76rem;
-        opacity: .65;
-        margin-bottom: .28rem;
-        text-transform: uppercase;
-        letter-spacing: .08em;
+    .side-card {
+        padding: 1rem;
+        margin: .65rem 0 1rem 0;
+        border-radius: 18px;
+        border: 1px solid rgba(148,163,184,.14);
+        background: linear-gradient(145deg, rgba(99,102,241,.10), rgba(16,185,129,.05));
+    }
+
+    .side-card-title {
         font-weight: 800;
+        font-size: .88rem;
+        margin-bottom: .35rem;
     }
 
-    .status-value {
-        font-size: .9rem;
-        font-weight: 700;
-        word-break: break-word;
+    .side-card-text {
+        opacity: .66;
+        font-size: .82rem;
+        line-height: 1.55;
     }
 
-    .dot-ok {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #22c55e;
-        margin-right: 7px;
-        box-shadow: 0 0 0 4px rgba(34,197,94,.12);
+    [data-testid="stSidebar"] [data-testid="stSlider"] {
+        padding: .25rem .2rem .55rem .2rem;
     }
 
-    .dot-warn {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #f59e0b;
-        margin-right: 7px;
-        box-shadow: 0 0 0 4px rgba(245,158,11,.12);
+    [data-testid="stSidebar"] hr {
+        margin: 1rem 0;
+        opacity: .16;
     }
 
     div[data-testid="stMetric"] {
@@ -409,60 +399,44 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    st.markdown("### Retrieval")
-    top_k = st.slider(
-        "Context chunks",
-        min_value=2,
-        max_value=10,
-        value=TOP_K_DEFAULT,
-        help="Number of relevant PDF chunks retrieved for each question.",
-    )
-
-    st.markdown("---")
-    st.markdown("### System")
-
-    if api_key:
-        st.markdown(
-            """
-            <div class="status-card">
-                <div class="status-title">Groq connection</div>
-                <div class="status-value"><span class="dot-ok"></span>Secret configured</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            """
-            <div class="status-card">
-                <div class="status-title">Groq connection</div>
-                <div class="status-value"><span class="dot-warn"></span>Secret not configured</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
     st.markdown(
-        f"""
-        <div class="status-card">
-            <div class="status-title">Language model</div>
-            <div class="status-value">{GROQ_MODEL}</div>
-        </div>
-
-        <div class="status-card">
-            <div class="status-title">Embeddings</div>
-            <div class="status-value">all-MiniLM-L6-v2</div>
-        </div>
-
-        <div class="status-card">
-            <div class="status-title">Vector store</div>
-            <div class="status-value"><span class="dot-ok"></span>FAISS · Local</div>
+        """
+        <div class="side-card">
+            <div class="side-card-title">✨ Smart PDF Search</div>
+            <div class="side-card-text">
+                Upload a document, then ask questions naturally. The app retrieves
+                the most relevant passages before generating each answer.
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.caption("Your Groq key is never entered or displayed in the app UI.")
+    st.markdown("#### 🎯 Retrieval depth")
+    top_k = st.slider(
+        "Relevant chunks",
+        min_value=2,
+        max_value=10,
+        value=TOP_K_DEFAULT,
+        help="Choose how many relevant passages should be used for each answer.",
+        label_visibility="collapsed",
+    )
+
+    st.caption("Fewer chunks = focused answers · More chunks = broader context")
+
+    st.markdown("---")
+    st.markdown(
+        """
+        <div class="side-card">
+            <div class="side-card-title">🔒 Private by design</div>
+            <div class="side-card-text">
+                API credentials are handled through Streamlit Secrets and are never
+                requested from visitors inside the app.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # -----------------------------
