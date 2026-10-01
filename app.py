@@ -13,7 +13,7 @@ from sentence_transformers import SentenceTransformer
 # App configuration
 # -----------------------------
 st.set_page_config(
-    page_title="Knowledge RAG",
+    page_title="DocMind AI",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -392,7 +392,7 @@ with st.sidebar:
     st.markdown(
         """
         <div class="side-brand">
-            <h2>🧠 Knowledge RAG</h2>
+            <h2>🧠 DocMind AI</h2>
             <p>Private document intelligence</p>
         </div>
         """,
@@ -448,7 +448,7 @@ st.markdown(
         <div class="rag-badge">✦ Retrieval-Augmented Generation</div>
         <h1>Chat with your PDF.<br>Grounded in your document.</h1>
         <p>
-            Upload a PDF and Knowledge RAG will extract its text, create token-aware
+            Upload a PDF and DocMind AI will extract its text, create token-aware
             chunks, generate open-source embeddings, index them with FAISS, and use
             Groq to answer questions from the most relevant context.
         </p>
